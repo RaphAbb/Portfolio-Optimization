@@ -58,6 +58,8 @@ class ADMM_Solver():
     def GDM_x(self, X, z, u, nb_iter, alpha, rho):
         i = 0
         while i<nb_iter:
+            if not ((X - alpha*self.grad_x(x = X,z = z,u = u, rho = rho)) >=0).all():
+                alpha = alpha/100
             X = X - alpha*self.grad_x(x = X,z = z,u = u, rho = rho)
             i += 1
         return X
@@ -66,7 +68,9 @@ class ADMM_Solver():
     def GDM_z(self, Z, x, u, nb_iter, alpha, rho, lambda_star, y_star):
         i = 0
         while i<nb_iter:
-            Z = Z - alpha*self.grad_z(x = x,z = Z,u = u, rho = rho, lambda_star = lambda_star, y_star = y_star)
+            if not ((Z - (alpha/100)*self.grad_z(x = x,z = Z,u = u, rho = rho, lambda_star = lambda_star, y_star = y_star)) >=0).all():
+                alpha = alpha/100
+            Z = Z - (alpha/100)*self.grad_z(x = x,z = Z,u = u, rho = rho, lambda_star = lambda_star, y_star = y_star)
             i += 1
         return Z
 
@@ -76,10 +80,8 @@ class ADMM_Solver():
         L = []
         x = np.random.rand(10)
         x = x/np.sum(x)
-        assert np.sum(x) == 1.0
         z = np.random.rand(10)
         z = z/np.sum(z)
-        assert np.sum(z) == 1.0
         u = np.random.rand(10)
         print('-'*80)
         print("ADMM Solver")
@@ -88,7 +90,16 @@ class ADMM_Solver():
         print("Inialization of u: \n",u)
         print('-'*80)
         for i in tqdm(range(nb_iter)):
+            if not (x >= 0).all():
+                print("This is x: \n", x)
+                x = x + np.min(x) + 1
+                print(i)
             x = self.GDM_x(X = x, z = z, u = u, nb_iter=nb_iter_grad, alpha = alpha, rho = rho)
+            if not (z >= 0).all():
+                print("This is z: \n", z)
+                z = z + np.min(z) + 1
+                print("This is z: \n", z)
+                print(i)
             #print("This is x: \n", x)
             z = self.GDM_z(Z = z, x = x, u = u, nb_iter=nb_iter_grad, alpha = alpha, rho = rho, lambda_star = lambda_star, y_star = y_star)
             #print("This is z: \n", z)
@@ -103,6 +114,4 @@ if __name__ == '__main__':
     path = './data/BloombergData_2004_2019.xlsx'
     admm = ADMM_Solver(path)
     admm.get_cov(by_hand = False, window = 120, date = pd.Timestamp('2019-2-28'))
-    print(admm.solve(nb_iter = 10000, nb_iter_grad = 500, alpha = 0.0001, rho = 0.0001, lambda_star = 0.001))
-
-
+    print(admm.solve(nb_iter = 10000, nb_iter_grad = 100, alpha = 0.0001, rho = 0.0001, lambda_star = 0.001))
