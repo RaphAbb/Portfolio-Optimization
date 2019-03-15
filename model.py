@@ -6,25 +6,20 @@ from datetime import datetime
 
 class ADMM_Solver():
 
-    def __init__(self, path):
+    def __init__(self, data):
         #self.weights = np.random.rand(10,1)
-        self.data = pd.read_excel(path, sheet_name = 'data_post')
-        self.data = self.data.set_index('date').dropna()
+        self.data = data
         self.ret = self.data/self.data.shift(1)-1
         self.log_ret = np.log(self.data/self.data.shift(1)).dropna()
 
-    def cov_matrix(self, date, window = 120, drop_backtest = True):
-        if drop_backtest:
-            data = self.log_ret.drop(['MSCI'], axis = 1)
-        data_ = data.loc[date:]
+    def cov_matrix(self, date, window = 120):
+        data_ = self.data.loc[date:]
         data_ = data_[:window]
         return np.array(data_.cov())
 
-    def cov_matrix_hand(self, date, window = 120, drop_backtest = True):
-        if drop_backtest:
-            data = self.log_ret.drop(['MSCI'], axis = 1)
-        data = data.loc[date:]
-        data = data[:window]
+    def cov_matrix_hand(self, date, window = 120):
+        data = self.data.loc[:date]
+        data = data[date-window:]
         A = np.zeros([10,10])
         sum_ = np.array(data.sum(axis = 0))
         y_bar = sum_/window
@@ -83,23 +78,23 @@ class ADMM_Solver():
         z = np.random.rand(10)
         z = z/np.sum(z)
         u = np.random.rand(10)
-        print('-'*80)
-        print("ADMM Solver")
-        print("Inialization of x: \n",x)
-        print("Inialization of z: \n",z)
-        print("Inialization of u: \n",u)
-        print('-'*80)
+#        print('-'*80)
+#        print("ADMM Solver")
+#        print("Inialization of x: \n",x)
+#        print("Inialization of z: \n",z)
+#        print("Inialization of u: \n",u)
+#        print('-'*80)
         for i in tqdm(range(nb_iter)):
             if not (x >= 0).all():
-                print("This is x: \n", x)
+                #print("This is x: \n", x)
                 x = x + np.min(x) + 1
-                print(i)
+                #print(i)
             x = self.GDM_x(X = x, z = z, u = u, nb_iter=nb_iter_grad, alpha = alpha, rho = rho)
             if not (z >= 0).all():
-                print("This is z: \n", z)
+                #print("This is z: \n", z)
                 z = z + np.min(z) + 1
-                print("This is z: \n", z)
-                print(i)
+                #print("This is z: \n", z)
+                #print(i)
             #print("This is x: \n", x)
             z = self.GDM_z(Z = z, x = x, u = u, nb_iter=nb_iter_grad, alpha = alpha, rho = rho, lambda_star = lambda_star, y_star = y_star)
             #print("This is z: \n", z)
@@ -111,7 +106,8 @@ class ADMM_Solver():
         return x,z
 
 if __name__ == '__main__':
-    path = './data/BloombergData_2004_2019.xlsx'
-    admm = ADMM_Solver(path)
+    file = "./data/histo.csv"
+    data = pd.read_csv(file, index_col = 0, parse_dates = True, dayfirst = False)
+    admm = ADMM_Solver(data)
     admm.get_cov(by_hand = False, window = 120, date = pd.Timestamp('2019-2-28'))
     print(admm.solve(nb_iter = 10000, nb_iter_grad = 100, alpha = 0.0001, rho = 0.0001, lambda_star = 0.001))
