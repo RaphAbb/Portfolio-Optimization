@@ -11,7 +11,6 @@ class ADMM_Solver():
     def __init__(self, data):
         '''
         Define the return and log_return
-
         :param data: pd.DataFrame
         '''
         self.data = data
@@ -21,7 +20,6 @@ class ADMM_Solver():
     def cov_matrix(self, date, window = 120):
         '''
         Compute the covariance matrix, using pandas implementation
-
         :param date: pd.Timestamp - date at which we start the time window
         :param window: int - # of days on which we compute the cov matrix
         '''
@@ -32,7 +30,6 @@ class ADMM_Solver():
     def cov_matrix_hand(self, date, window = 120):
         '''
         Compute the covariance matrix manually
-
         :param date: pd.Timestamp - date at which we start the time window
         :param window: int - # of days on which we compute the cov matrix
         '''    	
@@ -101,7 +98,6 @@ class ADMM_Solver():
     def solve(self, nb_iter = 10000, nb_iter_grad = 500, alpha = 0.01, rho = 0.1, lambda_star = 0.1, y_star = np.random.rand(10), random_permutation = False, verbose = False):
         '''
         Implements the solver for the ADMM
-
         :param nb_iter: int - # of iterations of the ADMM
         :param nb_iter_grad: int - # of iterations of each Gradient Descent
         :param rho: float -  constant associated with the penalty term in the augmented Lagrangian
@@ -127,7 +123,8 @@ class ADMM_Solver():
             print('-'*80)
         if random_permutation:
             L = [x,z,u]
-        for i in tqdm(range(nb_iter)):
+        #for i in tqdm(range(nb_iter)):
+        for i in range(nb_iter):
             if random_permutation:
                 K = np.random.permutation(3)
                 if not (x >= 0).all():

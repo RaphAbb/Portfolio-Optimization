@@ -79,15 +79,16 @@ class backtester:
             else:
                 ADMM = model.ADMM_Solver(self.data)
                 ADMM.get_cov(by_hand = False, window = window, date = date)
-                x,y = ADMM.solve(nb_iter = 10000, nb_iter_grad = 100, alpha = 0.0001, rho = 0.0001, lambda_star = 0.001)
-                self.weights.loc[i] = (x+y)/2
+                x,y = ADMM.solve(nb_iter = 10000, nb_iter_grad = 100, alpha = 0.0001, rho = 0.0001, random_permutation = True, lambda_star = 0.001, verbose = False)
+                self.weights.loc[self.weights.index == date] = ((x+y)/2).reshape(1, 10)
+            print(str(i) +"-th iteration done")
         self.weights = self.weights.dropna()
         self.weights = self.weights.div(self.weights.sum(axis=1), axis=0)
         self.weights = self.weights.reindex(self.data.index)
         self.weights = self.weights.ffill()
         
     #BT = sum of the daily returns == Profits not reinvested
-    def pnl(self):
+    def get_pnl(self):
         self.get_data()
         self.rebalancing(self.freq, self.method)
         self.pnl = self.weights.shift(1) * self.ret
@@ -103,16 +104,31 @@ if __name__ == "__main__":
     BT1 = backtester(data, freq = "Monthly", method = "inv vol")
     BT2 = backtester(data, freq = "Monthly", method = "MDP Short Selling")
     BT3 = backtester(data, freq = "Monthly", method = "MDP")
-    BT1.pnl()
-    BT2.pnl()
-    BT3.pnl()
+    BT1.get_pnl()
+    BT2.get_pnl()
+    ###This run takes about 50 minutes
+    BT3.get_pnl()
     
 
-####Comparaisons
+#####Comparaisons
     BT1.pnl.rolling(252).mean() / BT1.pnl.rolling(252).std() / np.sqrt(252)
     BT2.pnl.rolling(252).mean() / BT2.pnl.rolling(252).std() / np.sqrt(252)
     BT1.pnl.rolling(504).mean() / BT1.pnl.rolling(504).std() / np.sqrt(252)
     BT2.pnl.rolling(504).mean() / BT2.pnl.rolling(504).std() / np.sqrt(252)
     BT1.pnl.rolling(252*5).mean() / BT1.pnl.rolling(252*5).std() / np.sqrt(252)
     BT2.pnl.rolling(252*5).mean() / BT2.pnl.rolling(252*5).std() / np.sqrt(252)
+    BT3.pnl.rolling(252).mean() / BT3.pnl.rolling(252).std() / np.sqrt(252)
+    BT3.pnl.rolling(504).mean() / BT3.pnl.rolling(504).std() / np.sqrt(252)
+    BT3.pnl.rolling(252*5).mean() / BT3.pnl.rolling(252*5).std() / np.sqrt(252)
     
+    benchmark = pd.read_csv("./data/benchmark.csv", index_col = 0, parse_dates = True, dayfirst = False)
+    benchmark = benchmark/benchmark.shift(1) - 1
+    benchmark = benchmark.cumsum()
+    benchmark.rolling(252).mean() / benchmark.rolling(252).std() / np.sqrt(252)
+    benchmark.rolling(504).mean() / benchmark.rolling(504).std() / np.sqrt(252)
+    benchmark.rolling(252*5).mean() / benchmark.rolling(252*5).std() / np.sqrt(252)
+    
+    pd.DataFrame(BT1.pnl.rolling(252).mean() / BT1.pnl.rolling(252).std() / np.sqrt(252)).to_clipboard()
+    pd.DataFrame(BT2.pnl.rolling(252).mean() / BT2.pnl.rolling(252).std() / np.sqrt(252)).to_clipboard()
+    pd.DataFrame(BT3.pnl.rolling(252).mean() / BT3.pnl.rolling(252).std() / np.sqrt(252)).to_clipboard()
+    pd.DataFrame(benchmark.rolling(252).mean() / benchmark.rolling(252).std() / np.sqrt(252)).to_clipboard()
