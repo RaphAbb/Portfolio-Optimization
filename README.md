@@ -12,9 +12,9 @@ Finding the optimal investment portfolio has been a research topic for decades. 
 
 | **Statistic** | **MSCI** | **Inverse Vol** | **MDP Analytical** | **ADMM MDP** |
 | :------------ | :------: | :-------------: | :----------------: | :----------: |
-| Sharpe LY     |  0.724   |      2.736      |       2.070        |              |
-| Sharpe L2Y    |  0.556   |      1.939      |       2.264        |              |
-| Sharpe L5Y    |  0.189   |      0.583      |       0.592        |              |
+| Sharpe LY     |  0.724   |      2.736      |       2.070        |    1.753     |
+| Sharpe L2Y    |  0.556   |      1.939      |       2.264        |    0.803     |
+| Sharpe L5Y    |  0.189   |      0.583      |       0.592        |    0.428     |
 
 ##### Course
 
